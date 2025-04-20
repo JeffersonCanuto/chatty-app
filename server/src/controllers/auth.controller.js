@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import generateJwtToken from "../lib/utils.js";
-
+import cloudinary from "../lib/cloudinary.js";
 import bcrypt from "bcryptjs";
 
 /* CREATE (POST) - Sign up a new user with the credentials provided at the Sign up form */
@@ -104,3 +104,25 @@ export const logout = (_, res) => {
         return res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+/* UPDATE (PATCH) - Update user profile picture url in cloudinary and database */
+export const updateProfile = async(req, res) => {
+    try {
+        const { profilePicture } = req.body;
+        const userId = req.user._id;
+
+        // Check whether profile picture has been provided
+        if (!profilePicture) {
+            return res.status(400).json({ message: 'Profile picture is required' });
+        }
+
+        // Upload profile picture to cloudinary in case it has been provided
+        const uploadResponse = await cloudinary.uploader.upload(profilePicture);
+        const updatedUser = await User.findByIdAndUpdate(userId, { profilePicture: uploadResponse.secure_url }, { new: true });
+
+        res.status(200).json(updatedUser);
+    } catch(error) {
+        console.error(`Error while updating profile picture: ${error.message || error}`);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+}
