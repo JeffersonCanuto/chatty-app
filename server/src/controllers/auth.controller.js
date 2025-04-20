@@ -17,11 +17,13 @@ export const signup = async(req, res) => {
         if (password.length < 6) {
             return res.status(400).json({ message: 'Password must be at least 6 characters long'});
         }
-        
+
         const user = await User.findOne({ email });
 
         // Check whether user does not exist in the database already
-        if (user) return res.status(400).json({ message: 'Email already exists'});
+        if (user) {
+            return res.status(400).json({ message: 'Email already exists'});
+        }
 
         // Hash password to store it in the database
         const salt = await bcrypt.genSalt(10);
@@ -49,13 +51,46 @@ export const signup = async(req, res) => {
             res.status(400).json({ message: 'Invalid user data'});
         }
     } catch(error) {
-        console.error(`Error while signing up: ${error}`);
+        console.error(`Error while signing up: ${error.message || error}`);
         return res.status(500).json({ message: 'Internal Server Error'});
     }
 };
 
-export const login = (req, res) => {
-    res.send('login route...');
+export const login = async(req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        // Check whether email and password are provided
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required "});
+        }
+
+        // Check whether user exists by email
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid credentials"});
+        }
+
+        // Check whether password is correct
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: "Invalid credentials"})
+        }
+
+        generateJwtToken(user._id, res)
+
+        return res.status(200).json({
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            profilePicture: user.profilePicture
+        });
+    } catch(error) {
+        console.error(`Error while logging in: ${error.message || error}`);
+        return res.status(500).json({ message: "Internal Server Error"});
+    }
 };
 
 export const logout = (req, res) => {
