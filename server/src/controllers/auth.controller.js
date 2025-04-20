@@ -8,11 +8,16 @@ export const signup = async(req, res) => {
     const { fullName, email, password } = req.body;
     
     try {
+        // Check whether all fields are filled with proper values
+        if (!fullName || !email || !password) {
+            return res.status(400).json({ message: "All fields are required"});
+        }
+
         // Check whether password is valid (>=6 characters long)
         if (password.length < 6) {
             return res.status(400).json({ message: 'Password must be at least 6 characters long'});
         }
-
+        
         const user = await User.findOne({ email });
 
         // Check whether user does not exist in the database already
@@ -38,7 +43,7 @@ export const signup = async(req, res) => {
                 _id: newUser._id,
                 fullName: newUser.fullName,
                 email: newUser.email,
-                profilePic: newUser.profilePic
+                profilePicture: newUser.profilePicture
             });
         } else {
             res.status(400).json({ message: 'Invalid user data'});
