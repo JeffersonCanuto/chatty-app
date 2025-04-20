@@ -3,6 +3,17 @@ import generateJwtToken from "../lib/utils.js";
 import cloudinary from "../lib/cloudinary.js";
 import bcrypt from "bcryptjs";
 
+/* FETCH (GET) - Check whether user is properly authenticated */
+export const checkAuth = (req, res) => {
+    try {
+        const user = req.user;
+        res.status(200).json(user);
+    } catch(error) {
+        console.error(`Error checking whether user is authenticated: ${error.message || error}`);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+}
+
 /* CREATE (POST) - Sign up a new user with the credentials provided at the Sign up form */
 export const signup = async(req, res) => {
     const { fullName, email, password } = req.body;
